@@ -21,8 +21,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
 
 CRender::CRender()
 {
-	// Build and compile our shader program
-	// Vertex shader
+	//定点着色器
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
@@ -35,7 +34,7 @@ CRender::CRender()
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
-	// Fragment shader
+	// 片段着色器
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 	glCompileShader(fragmentShader);
@@ -46,7 +45,7 @@ CRender::CRender()
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
-	// Link shaders
+	// 链接着色器
 	m_shaderProgram = glCreateProgram();
 	glAttachShader(m_shaderProgram, vertexShader);
 	glAttachShader(m_shaderProgram, fragmentShader);
@@ -71,13 +70,15 @@ CRender::CRender()
 		1, 2, 3   // Second Triangle
 	};
 	
+	//生成缓冲对象
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	// VAO绑定到哪里了呢？
 	glBindVertexArray(VAO);
-
+	//VBO绑定到GL_ARRAY_BUFFER
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//把定点数据复制到（数据复制到GPU？）
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
