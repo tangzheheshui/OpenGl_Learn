@@ -40,16 +40,13 @@ int main()
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 
-
-	
 	while (!glfwWindowShouldClose(window))
 	{
-		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
+		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 
 		// Render
 		CRender::Instance()->Render();
-		
 
 		// Swap the screen buffers
 		glfwSwapBuffers(window);

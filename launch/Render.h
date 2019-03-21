@@ -1,5 +1,9 @@
-#pragma once
+#ifndef Render_h__
+#define Render_h__
+
+#include "Shader.h"
 #include <GL\glew.h>
+class CShader;
 class CRender
 {
 public:
@@ -13,5 +17,10 @@ private:
 	static CRender* m_instance;
 	GLuint VBO, VAO, EBO;
 	GLuint m_shaderProgram;
+	CShader* m_shader;
+
 };
+
+#endif // Render_h__
+
 
