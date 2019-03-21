@@ -67,15 +67,15 @@ CShader::CShader(const GLchar* vertexPath, const GLchar* fragmentPath)
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 	// Shader Program
-	this->Program = glCreateProgram();
-	glAttachShader(this->Program, vertex);
-	glAttachShader(this->Program, fragment);
-	glLinkProgram(this->Program);
+	this->m_program = glCreateProgram();
+	glAttachShader(this->m_program, vertex);
+	glAttachShader(this->m_program, fragment);
+	glLinkProgram(this->m_program);
 	// Print linking errors if any
-	glGetProgramiv(this->Program, GL_LINK_STATUS, &success);
+	glGetProgramiv(this->m_program, GL_LINK_STATUS, &success);
 	if (!success)
 	{
-		glGetProgramInfoLog(this->Program, 512, NULL, infoLog);
+		glGetProgramInfoLog(this->m_program, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
 	}
 	// Delete the shaders as they're linked into our program now and no longer necessery
@@ -89,5 +89,5 @@ CShader::~CShader()
 
 void CShader::Use()
 {
-	glUseProgram(this->Program);
+	glUseProgram(this->m_program);
 }

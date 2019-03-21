@@ -14,7 +14,7 @@ public:
 	~CShader();
 	void Use();
 private:
-	GLuint Program;
+	GLuint m_program;
 };
 
 
