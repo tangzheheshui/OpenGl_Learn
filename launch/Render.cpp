@@ -4,6 +4,7 @@
 #include <SOIL/SOIL.h>
 #include <assert.h>
 #include <GLFW/glfw3.h>
+#include "Font.h"
 
 
 glm::vec3 cubePositions[] = {
@@ -71,6 +72,17 @@ CRender::CRender()
 	m_shader->LinkShader();
 	CreateVaoVbo();
 	InitShaser(m_shader);
+	
+	//字体相关
+	m_shader_font = new CShader();
+	m_shader_font->SetVertexShader("shader/shader_font.vs");
+	m_shader_font->SetFragmentShader("shader/shader_font.frag");
+	m_shader_font->LinkShader();
+
+	m_font = new GlFont;
+	m_shader_font->Use();
+	CreateFontProjection(m_shader_font);
+	CreateFontVaoVbo();
 }
 
 
@@ -78,6 +90,9 @@ CRender::~CRender()
 {
 	delete m_shader;
 	m_shader = NULL;
+
+	delete m_shader_font;
+	m_shader_font = NULL;
 }
 
 CRender* CRender::Instance()
@@ -88,10 +103,7 @@ CRender* CRender::Instance()
 
 void CRender::Update()
 {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_textureA);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_textureB);
+	
 
 	const float PI = 3.1415926 / 180;
 	float radius = 10.0f;
@@ -109,9 +121,22 @@ void CRender::Render()
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	
+	//文字
+	//glBindVertexArray(VAO_font);
+	m_shader_font->SetVAO(VAO_font);
+	m_shader_font->SetVBO(VBO_font);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	m_font->RenderText(m_shader_font, "(C) LearnOpenGL.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+
 	//绘制3D
 	m_shader->Use();
 	glBindVertexArray(VAO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_textureA);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_textureB);
 	for (unsigned int i = 0; i < 10; i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
@@ -121,6 +146,8 @@ void CRender::Render()
 		m_shader->setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
+	
+	
 }
 
 void CRender::DeleteBuff()
@@ -195,4 +222,27 @@ void CRender::InitShaser(CShader* shader)
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
 	shader->setMat4("projection", projection);
 	
+}
+
+void CRender::CreateFontProjection(CShader* shader)
+{
+	if (!shader)
+	{
+		return;
+	}
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(800), 0.0f, static_cast<GLfloat>(600));
+	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+}
+
+void CRender::CreateFontVaoVbo()
+{
+	glGenVertexArrays(1, &VAO_font);
+	glGenBuffers(1, &VBO_font);
+	glBindVertexArray(VAO_font);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_font);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }

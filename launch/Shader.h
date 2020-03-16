@@ -15,6 +15,7 @@ public:
 	void SetVertexShader(const std::string &file_path);
 	void SetFragmentShader(const std::string &file_path);
 	void LinkShader();
+	GLuint GetProgram() { return m_program; }
 	void setBool(const std::string &name, bool value) const
 	{
 		glUniform1i(glGetUniformLocation(m_program, name.c_str()), (int)value);
@@ -71,13 +72,17 @@ public:
 	{
 		glUniformMatrix4fv(glGetUniformLocation(m_program, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 	}
-
+	void SetVAO(const GLuint &vao) { VAO = vao; };
+	void SetVBO(const GLuint &vbo) { VBO = vbo; };
+	GLuint GetVAO() { return VAO; }
+	GLuint GetVBO() { return VBO; }
 private:
 	GLuint CreateShader(GLuint shader_type,const std::string &file_path);
 private:
 	GLuint m_program;
 	GLuint m_vertex_shader;
 	GLuint m_fragment_shader;
+	GLuint VBO, VAO;
 };
 
 #endif // Shader_h__
