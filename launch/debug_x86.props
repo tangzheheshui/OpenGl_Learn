@@ -4,7 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>..\third_lib\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\third_lib\lib\GLFW;..\third_lib\lib\SOIL;..\third_lib\lib\GL\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\third_lib\lib\GLFW;E:\myGitHub\OpenGl_Learn\third_lib\freetype\win32;..\third_lib\lib\SOIL;..\third_lib\lib\GL\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup />
   <ItemGroup />

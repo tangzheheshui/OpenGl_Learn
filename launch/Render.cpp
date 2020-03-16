@@ -66,10 +66,11 @@ GLfloat vertices[] = {
 CRender::CRender()
 {
 	m_shader = new CShader();
-
 	m_shader->SetVertexShader("shader/shader.vs");
 	m_shader->SetFragmentShader("shader/shader.frag");
 	m_shader->LinkShader();
+	CreateVaoVbo();
+	InitShaser(m_shader);
 }
 
 
@@ -87,30 +88,19 @@ CRender* CRender::Instance()
 
 void CRender::Update()
 {
-	//创建VAO VBO 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_textureA);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_textureB);
 
-	//绑定VAO
-	glBindVertexArray(VAO);
-
-	//绑定VBO
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	// Color attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
-
-	//Uniform
-	m_shader->setInt("texture1", 0);
-	m_shader->setInt("texture2", 1);
-
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
-	m_shader->setMat4("projection", projection);
+	const float PI = 3.1415926 / 180;
+	float radius = 10.0f;
+	double time = glfwGetTime();
+	float camX = sin(time) * radius;
+	float camZ = cos(time) * radius;
+	float yaw = (time + 3.1415926) / PI;
+	m_camera.SetCamera(glm::vec3(camX, 0.0f, camZ), 0.0, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+	m_shader->setMat4("view", m_camera.GetViewMatrix());
 }
 
 void CRender::Render()
@@ -119,37 +109,11 @@ void CRender::Render()
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Activate shader
-	// Bind Texture
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_textureA);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_textureB);
-	
+	//绘制3D
 	m_shader->Use();
-	//// camera
-	//四元数的方式
-	const float PI = 3.1415926 / 180;
-	float radius = 10.0f;
-	double time = glfwGetTime();
-	//time = PI * 45;
-	float camX = sin(time) * radius;
-	float camZ = cos(time) * radius;
-	//m_camera.SetCamera(glm::vec3(camX, .0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-	
-	//欧拉角
-	
-	//float a = glm::radians(45);
-	float yaw = (time + 3.1415926)/PI;
-	m_camera.SetCamera(glm::vec3(camX, 0.0f, camZ),0.0, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
-	m_shader->setMat4("view", m_camera.GetViewMatrix());
-
 	glBindVertexArray(VAO);
-
 	for (unsigned int i = 0; i < 10; i++)
 	{
-		// calculate the model matrix for each object and pass it to shader before drawing
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
 		float angle = 20.0f * i;
@@ -196,4 +160,39 @@ void CRender::CreateTexture()
 {
 	m_textureA = CreateTexture("container.jpg");
 	m_textureB = CreateTexture("awesomeface.png");
+}
+
+void CRender::CreateVaoVbo()
+{
+	//创建VAO VBO 
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	//绑定VAO
+	glBindVertexArray(VAO);
+
+	//绑定VBO
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	// Color attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+}
+
+void CRender::InitShaser(CShader* shader)
+{
+	if (!shader)
+	{
+		return;
+	}
+	shader->Use();
+	shader->setInt("texture1", 0);
+	shader->setInt("texture2", 1);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
+	shader->setMat4("projection", projection);
+	
 }

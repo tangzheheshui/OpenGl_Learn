@@ -18,6 +18,8 @@ public:
 	void DeleteBuff();
 private:
 	GLuint CreateTexture(const std::string &path);
+	void CreateVaoVbo();
+	void InitShaser(CShader* shader);
 private:
 	GLuint VBO, VAO, EBO;
 	GLuint m_shaderProgram;
