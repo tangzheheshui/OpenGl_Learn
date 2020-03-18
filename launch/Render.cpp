@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <GLFW/glfw3.h>
 #include "Font.h"
+#include "resource_manager.h"
+#include "SpriteRenderer.h"
 
 
 glm::vec3 cubePositions[] = {
@@ -66,33 +68,30 @@ GLfloat vertices[] = {
 
 CRender::CRender()
 {
-	m_shader = new CShader();
-	m_shader->SetVertexShader("shader/shader.vs");
-	m_shader->SetFragmentShader("shader/shader.frag");
-	m_shader->LinkShader();
-	CreateVaoVbo();
-	InitShaser(m_shader);
-	
-	//字体相关
-	m_shader_font = new CShader();
-	m_shader_font->SetVertexShader("shader/shader_font.vs");
-	m_shader_font->SetFragmentShader("shader/shader_font.frag");
-	m_shader_font->LinkShader();
+	//3D场景的着色器
+	ResourceManager::LoadShader("shader/shader.vs", "shader/shader.frag", "", "shader_3d");
+	Init3DShaderUniform(ResourceManager::GetShader("shader_3d"));
+	Create3DVaoVbo();
 
-	m_font = new GlFont;
-	m_shader_font->Use();
-	CreateFontProjection(m_shader_font);
+	//文字绘制着色器
+	ResourceManager::LoadShader("shader/shader_font.vs", "shader/shader_font.frag", "", "shader_font");
+	ResourceManager::GetShader("shader_font")->Use();
+	InitFontShaderUniform(ResourceManager::GetShader("shader_font"));
 	CreateFontVaoVbo();
-}
 
+	//字体绘制
+	m_font = new GlFont;
+
+	//精灵渲染器
+	m_sprite_renderer = new SpriteRenderer;
+
+	//加载纹理
+	ResourceManager::LoadTexture("awesomeface.png", GL_TRUE, "face");
+}
 
 CRender::~CRender()
 {
-	delete m_shader;
-	m_shader = NULL;
 
-	delete m_shader_font;
-	m_shader_font = NULL;
 }
 
 CRender* CRender::Instance()
@@ -103,8 +102,6 @@ CRender* CRender::Instance()
 
 void CRender::Update()
 {
-	
-
 	const float PI = 3.1415926 / 180;
 	float radius = 10.0f;
 	double time = glfwGetTime();
@@ -112,7 +109,8 @@ void CRender::Update()
 	float camZ = cos(time) * radius;
 	float yaw = (time + 3.1415926) / PI;
 	m_camera.SetCamera(glm::vec3(camX, 0.0f, camZ), 0.0, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
-	m_shader->setMat4("view", m_camera.GetViewMatrix());
+	ResourceManager::GetShader("shader_3d")->Use();
+	ResourceManager::GetShader("shader_3d")->setMat4("view", m_camera.GetViewMatrix());
 }
 
 void CRender::Render()
@@ -121,17 +119,8 @@ void CRender::Render()
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	
-	//文字
-	//glBindVertexArray(VAO_font);
-	m_shader_font->SetVAO(VAO_font);
-	m_shader_font->SetVBO(VBO_font);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	m_font->RenderText(m_shader_font, "(C) LearnOpenGL.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
-
 	//绘制3D
-	m_shader->Use();
+	ResourceManager::GetShader("shader_3d")->Use();
 	glBindVertexArray(VAO);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_textureA);
@@ -143,11 +132,23 @@ void CRender::Render()
 		model = glm::translate(model, cubePositions[i]);
 		float angle = 20.0f * i;
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		m_shader->setMat4("model", model);
+		ResourceManager::GetShader("shader_3d")->setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 	
-	
+	//文字
+	glBindVertexArray(VAO_font);
+	ResourceManager::GetShader("shader_font")->SetVAO(VAO_font);
+	ResourceManager::GetShader("shader_font")->SetVBO(VBO_font);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	m_font->RenderText(ResourceManager::GetShader("shader_font"), "(C) LearnOpenGL.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+
+	//绘制精灵
+	if (m_sprite_renderer)
+	{
+		m_sprite_renderer->DrawSprite(ResourceManager::GetTexture("face"), glm::vec2(200, 200), glm::vec2(300, 400), 45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
 }
 
 void CRender::DeleteBuff()
@@ -189,7 +190,7 @@ void CRender::CreateTexture()
 	m_textureB = CreateTexture("awesomeface.png");
 }
 
-void CRender::CreateVaoVbo()
+void CRender::Create3DVaoVbo()
 {
 	//创建VAO VBO 
 	glGenVertexArrays(1, &VAO);
@@ -210,7 +211,7 @@ void CRender::CreateVaoVbo()
 	glEnableVertexAttribArray(1);
 }
 
-void CRender::InitShaser(CShader* shader)
+void CRender::Init3DShaderUniform(CShader* shader)
 {
 	if (!shader)
 	{
@@ -221,10 +222,9 @@ void CRender::InitShaser(CShader* shader)
 	shader->setInt("texture2", 1);
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
 	shader->setMat4("projection", projection);
-	
 }
 
-void CRender::CreateFontProjection(CShader* shader)
+void CRender::InitFontShaderUniform(CShader* shader)
 {
 	if (!shader)
 	{

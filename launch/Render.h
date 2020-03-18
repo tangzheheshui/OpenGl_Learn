@@ -7,6 +7,7 @@
 
 class CShader;
 class GlFont;
+class SpriteRenderer;
 
 class CRender
 {
@@ -21,20 +22,19 @@ public:
 	void DeleteBuff();
 private:
 	GLuint CreateTexture(const std::string &path);
-	void CreateVaoVbo();
-	void InitShaser(CShader* shader);
-	void CreateFontProjection(CShader* shader);
+	void Create3DVaoVbo();
+	void Init3DShaderUniform(CShader* shader);
+	void InitFontShaderUniform(CShader* shader);
 	void CreateFontVaoVbo();
 private:
 	GLuint VBO, VAO, EBO;
 	GLuint m_shaderProgram;
-	CShader* m_shader;
 	GLuint VBO_font, VAO_font;
-	CShader* m_shader_font;
 	GLuint m_textureA;
 	GLuint m_textureB;
 	Camera m_camera;
 	GlFont* m_font;
+	SpriteRenderer* m_sprite_renderer;
 };
 
 #endif // Render_h__
