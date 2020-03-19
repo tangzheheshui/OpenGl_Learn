@@ -5,11 +5,12 @@
 SpriteRenderer::SpriteRenderer()
 	:m_shader(NULL)
 {
-	m_shader = ResourceManager::LoadShader("shader/shader_sprite.vs", "shader/shader_sprite.frag", "", "shader_sprite");
+	m_shader = ResourceManager::LoadShader("../shader/shader_sprite.vs", "../shader/shader_sprite.frag", "", "shader_sprite");
+	
 	glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(800), static_cast<GLfloat>(600), 0.0f, -1.0f, 1.0f);
-	m_shader->Use();
-	m_shader->setInt("image", 0);
 	m_shader->setMat4("projection", projection);
+	m_shader->setInt("image", 0);
+
 	initRenderData();
 }
 
@@ -59,13 +60,13 @@ void SpriteRenderer::initRenderData()
 		1.0f, 0.0f, 1.0f, 0.0f
 	};
 
-	glGenVertexArrays(1, &this->quadVAO);
+	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &VBO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindVertexArray(this->quadVAO);
+	glBindVertexArray(quadVAO);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

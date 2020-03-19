@@ -84,6 +84,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>glew32s.lib;glfw3.lib;opengl32.lib;SOIL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

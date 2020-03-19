@@ -19,10 +19,12 @@ public:
 	void CreateTexture();
 	void Update();
 	void Render();
+	void RenderLightTest();
 	void DeleteBuff();
 private:
 	GLuint CreateTexture(const std::string &path);
 	void Create3DVaoVbo();
+	void CreateLightVaoVbo();
 	void Init3DShaderUniform(CShader* shader);
 	void InitFontShaderUniform(CShader* shader);
 	void CreateFontVaoVbo();
@@ -30,6 +32,7 @@ private:
 	GLuint VBO, VAO, EBO;
 	GLuint m_shaderProgram;
 	GLuint VBO_font, VAO_font;
+	GLuint VBO_light, VAO_light_cube, VAO_light;
 	GLuint m_textureA;
 	GLuint m_textureB;
 	Camera m_camera;

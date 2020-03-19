@@ -69,12 +69,12 @@ GLfloat vertices[] = {
 CRender::CRender()
 {
 	//3D场景的着色器
-	ResourceManager::LoadShader("shader/shader.vs", "shader/shader.frag", "", "shader_3d");
+	ResourceManager::LoadShader("../shader/shader.vs", "../shader/shader.frag", "", "shader_3d");
 	Init3DShaderUniform(ResourceManager::GetShader("shader_3d"));
 	Create3DVaoVbo();
 
 	//文字绘制着色器
-	ResourceManager::LoadShader("shader/shader_font.vs", "shader/shader_font.frag", "", "shader_font");
+	ResourceManager::LoadShader("../shader/shader_font.vs", "../shader/shader_font.frag", "", "shader_font");
 	ResourceManager::GetShader("shader_font")->Use();
 	InitFontShaderUniform(ResourceManager::GetShader("shader_font"));
 	CreateFontVaoVbo();
@@ -82,11 +82,16 @@ CRender::CRender()
 	//字体绘制
 	m_font = new GlFont;
 
+	//加载纹理
+	ResourceManager::LoadTexture("../img/awesomeface.png", GL_TRUE, "face");
+
 	//精灵渲染器
 	m_sprite_renderer = new SpriteRenderer;
 
-	//加载纹理
-	ResourceManager::LoadTexture("awesomeface.png", GL_TRUE, "face");
+	//光照的着色器
+	ResourceManager::LoadShader("../shader/light.vs", "../shader/light.frag", "", "shader_light");
+	ResourceManager::LoadShader("../shader/light_cube.vs", "../shader/light_cube.frag", "", "shader_light_cube");
+	CreateLightVaoVbo();
 }
 
 CRender::~CRender()
@@ -105,6 +110,7 @@ void CRender::Update()
 	const float PI = 3.1415926 / 180;
 	float radius = 10.0f;
 	double time = glfwGetTime();
+//	time = 0;
 	float camX = sin(time) * radius;
 	float camZ = cos(time) * radius;
 	float yaw = (time + 3.1415926) / PI;
@@ -151,6 +157,50 @@ void CRender::Render()
 	}
 }
 
+void CRender::RenderLightTest()
+{
+	//清理颜色
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	CShader* lightingShader = ResourceManager::GetShader("shader_light_cube");
+	lightingShader->Use();
+	lightingShader->setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+	lightingShader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+	// view/projection transformations
+	const unsigned int SCR_WIDTH = 800;
+	const unsigned int SCR_HEIGHT = 600;
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = m_camera.GetViewMatrix();
+	lightingShader->setMat4("projection", projection);
+	lightingShader->setMat4("view", view);
+
+	// world transformation
+	glm::mat4 model = glm::mat4(1.0f);
+	lightingShader->setMat4("model", model);
+
+	// render the cube
+	glBindVertexArray(VAO_light_cube);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+	// also draw the lamp object
+	CShader* lampShader = ResourceManager::GetShader("shader_light");
+	
+	lampShader->Use();
+	lampShader->setMat4("projection", projection);
+	lampShader->setMat4("view", view);
+	model = glm::mat4(1.0f);
+
+	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+	model = glm::translate(model, lightPos);
+	model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+	lampShader->setMat4("model", model);
+
+	glBindVertexArray(VAO_light);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
 void CRender::DeleteBuff()
 {
 	glDeleteVertexArrays(1, &VAO);
@@ -186,8 +236,8 @@ GLuint CRender::CreateTexture(const std::string &path)
 
 void CRender::CreateTexture()
 {
-	m_textureA = CreateTexture("container.jpg");
-	m_textureB = CreateTexture("awesomeface.png");
+	m_textureA = CreateTexture("../img/container.jpg");
+	m_textureB = CreateTexture("../img/awesomeface.png");
 }
 
 void CRender::Create3DVaoVbo()
@@ -209,6 +259,77 @@ void CRender::Create3DVaoVbo()
 	// Color attribute
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
+}
+
+void CRender::CreateLightVaoVbo()
+{
+	float vertices[] = {
+		-0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f,  0.5f, -0.5f,
+		0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+
+		-0.5f, -0.5f,  0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+
+		-0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f, -0.5f,
+
+		-0.5f,  0.5f, -0.5f,
+		0.5f,  0.5f, -0.5f,
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+	};
+	// first, configure the cube's VAO (and VBO)
+	
+	glGenVertexArrays(1, &VAO_light_cube);
+	glGenBuffers(1, &VBO_light);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_light);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindVertexArray(VAO_light_cube);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
+	
+	glGenVertexArrays(1, &VAO_light);
+	glBindVertexArray(VAO_light);
+
+	// we only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need (it's already bound, but we do it again for educational purposes)
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_light);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 }
 
 void CRender::Init3DShaderUniform(CShader* shader)
